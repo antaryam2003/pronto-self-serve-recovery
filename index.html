@@ -1,0 +1,979 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pronto · Self-serve recovery with live visit status</title>
+<style>
+:root{
+  --green:#05AC5F; --green-dk:#048A4C; --green-tint:#E9F8F1; --green-line:#BFE9D5;
+  --ink:#0C0C0C; --ink-2:#333333; --ink-3:#666666; --ink-4:#8A94A0;
+  --line:#DDE5ED; --surf:#F9FAFC; --surf-2:#F1F5F9;
+  --amber:#9A5B00; --amber-bg:#FFF6E5; --amber-line:#F5DDAE;
+  --red:#B3261E; --red-bg:#FDECEA; --red-line:#F5C6C2;
+  --blue:#1B5FBF; --blue-bg:#EDF3FE;
+  --radius:18px;
+  --font:"Lexend","Urbanist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --page-bg:#EEF1F5; --page-fg:#0C0C0C; --card-bg:#FFFFFF; --card-line:#DDE5ED; --muted:#5A6572;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --page-bg:#0E1114; --page-fg:#F2F4F6; --card-bg:#171B20; --card-line:#2A3038; --muted:#9AA4B0; }
+}
+:root[data-theme="dark"]{ --page-bg:#0E1114; --page-fg:#F2F4F6; --card-bg:#171B20; --card-line:#2A3038; --muted:#9AA4B0; }
+:root[data-theme="light"]{ --page-bg:#EEF1F5; --page-fg:#0C0C0C; --card-bg:#FFFFFF; --card-line:#DDE5ED; --muted:#5A6572; }
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:var(--font); background:var(--page-bg); color:var(--page-fg);
+  -webkit-font-smoothing:antialiased; line-height:1.45;
+}
+a{color:inherit}
+button{font-family:inherit}
+
+/* ---------- page shell ---------- */
+.wrap{max-width:1280px;margin:0 auto;padding:28px 20px 64px}
+.head{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content:space-between;margin-bottom:22px}
+.head h1{font-size:26px;line-height:1.2;margin:0 0 6px;letter-spacing:-.02em;font-weight:800}
+.head h1 .g{color:var(--green)}
+.head p{margin:0;color:var(--muted);font-size:14px;max-width:62ch}
+.kicker{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:700;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--green);margin-bottom:8px}
+.kicker i{width:7px;height:7px;border-radius:50%;background:var(--green);display:block}
+
+.modeSwitch{display:inline-flex;background:var(--card-bg);border:1px solid var(--card-line);border-radius:999px;padding:4px;gap:2px}
+.modeSwitch button{border:0;background:transparent;color:var(--muted);font-size:13px;font-weight:600;
+  padding:8px 16px;border-radius:999px;cursor:pointer;white-space:nowrap}
+.modeSwitch button.on{background:var(--ink);color:#fff}
+.modeSwitch button.on.today{background:#8A94A0}
+
+.stage{display:grid;grid-template-columns:minmax(280px,320px) minmax(340px,380px) minmax(300px,1fr);gap:24px;align-items:start}
+@media (max-width:1100px){ .stage{grid-template-columns:1fr 380px;} .col-note{grid-column:1/-1} }
+@media (max-width:760px){ .stage{grid-template-columns:1fr} .col-ctrl,.col-note{grid-column:auto} .device{margin:0 auto} }
+
+.panel{background:var(--card-bg);border:1px solid var(--card-line);border-radius:16px;padding:16px 16px 18px;margin-bottom:16px}
+.panel h2{margin:0 0 3px;font-size:13px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+.panel .hint{margin:0 0 14px;font-size:12px;color:var(--muted);line-height:1.5}
+
+/* ---------- scenario controls ---------- */
+.scn{display:flex;flex-direction:column;gap:8px}
+.scn button{display:flex;gap:11px;align-items:flex-start;text-align:left;width:100%;cursor:pointer;
+  background:transparent;border:1.5px solid var(--card-line);border-radius:13px;padding:11px 12px;color:inherit}
+.scn button:hover{border-color:var(--green)}
+.scn button.on{border-color:var(--green);background:var(--green-tint);color:var(--ink)}
+.scn button.on .s{color:var(--ink-3)}
+.scn .dot{width:9px;height:9px;border-radius:50%;background:var(--card-line);margin-top:5px;flex:0 0 auto}
+.scn button.on .dot{background:var(--green)}
+.scn .t{font-size:13.5px;font-weight:700;display:block}
+.scn .s{font-size:11.5px;color:var(--muted);display:block;margin-top:2px;line-height:1.4}
+
+.transport{display:flex;gap:8px;margin-top:14px}
+.transport button{flex:1;cursor:pointer;border:1px solid var(--card-line);background:transparent;color:inherit;
+  border-radius:11px;padding:9px 6px;font-size:12px;font-weight:700}
+.transport button:hover{border-color:var(--green);color:var(--green)}
+.transport button.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+.clockRow{display:flex;align-items:baseline;justify-content:space-between;margin-top:14px;
+  padding-top:12px;border-top:1px dashed var(--card-line)}
+.clockRow .big{font-size:22px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.clockRow .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;font-weight:700}
+
+/* ---------- state ladder ---------- */
+.ladder{display:flex;flex-direction:column;gap:0;margin-top:2px}
+.ladder .step{display:flex;gap:11px;align-items:flex-start;padding:7px 0;opacity:.42}
+.ladder .step.past{opacity:.78}
+.ladder .step.now{opacity:1}
+.ladder .rail{display:flex;flex-direction:column;align-items:center;flex:0 0 auto;width:14px}
+.ladder .pip{width:11px;height:11px;border-radius:50%;border:2px solid var(--card-line);background:var(--card-bg);margin-top:4px}
+.ladder .step.past .pip{background:var(--green);border-color:var(--green)}
+.ladder .step.now .pip{background:var(--green);border-color:var(--green);box-shadow:0 0 0 4px rgba(5,172,95,.2)}
+.ladder .step.alert.now .pip{background:var(--amber);border-color:var(--amber);box-shadow:0 0 0 4px rgba(154,91,0,.18)}
+.ladder .step.bad.now .pip{background:var(--red);border-color:var(--red);box-shadow:0 0 0 4px rgba(179,38,30,.18)}
+.ladder .bar{width:2px;flex:1;min-height:12px;background:var(--card-line);margin-top:2px}
+.ladder .step.past .bar{background:var(--green)}
+.ladder .txt .n{font-size:13px;font-weight:700}
+.ladder .txt .d{font-size:11.5px;color:var(--muted);line-height:1.4}
+
+/* ---------- device ---------- */
+.device{width:380px;max-width:100%;background:#0C0C0C;border-radius:44px;padding:11px;
+  box-shadow:0 24px 60px rgba(12,12,12,.28), 0 2px 6px rgba(12,12,12,.2)}
+.screen{position:relative;background:#fff;color:var(--ink);border-radius:34px;overflow:hidden;height:774px;
+  display:flex;flex-direction:column}
+.notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;height:26px;background:#0C0C0C;
+  border-radius:0 0 16px 16px;z-index:40}
+.statusbar{display:flex;justify-content:space-between;align-items:center;padding:11px 22px 5px;font-size:12px;
+  font-weight:700;color:var(--ink);flex:0 0 auto}
+.appbar{display:flex;align-items:center;gap:10px;padding:6px 18px 12px;flex:0 0 auto;border-bottom:1px solid var(--line)}
+.appbar .back{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:#fff;cursor:pointer;
+  display:grid;place-items:center;font-size:15px;color:var(--ink);flex:0 0 auto;padding:0}
+.appbar .logo{font-size:19px;font-weight:800;color:var(--green);letter-spacing:-.03em}
+.appbar .ttl{font-size:15px;font-weight:800;letter-spacing:-.01em}
+.appbar .sp{margin-left:auto;font-size:11px;color:var(--ink-3);font-weight:600}
+
+.body{flex:1;overflow-y:auto;overflow-x:hidden;padding:14px 16px 26px;scroll-behavior:smooth}
+.body::-webkit-scrollbar{width:0}
+
+/* phone typography + components */
+.h-lg{font-size:21px;font-weight:800;letter-spacing:-.02em;margin:0 0 4px;line-height:1.22}
+.h-md{font-size:15px;font-weight:800;margin:0 0 6px;letter-spacing:-.01em}
+.sub{font-size:12.5px;color:var(--ink-3);margin:0 0 14px;line-height:1.5}
+.eyebrow{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-4);margin:20px 0 8px}
+
+.card{border:1px solid var(--line);border-radius:var(--radius);padding:14px;background:#fff;margin-bottom:12px}
+.card.tint{background:var(--green-tint);border-color:var(--green-line)}
+.card.warn{background:var(--amber-bg);border-color:var(--amber-line)}
+.card.bad{background:var(--red-bg);border-color:var(--red-line)}
+.card.flat{background:var(--surf);border-color:var(--surf)}
+
+.statusHero{border-radius:22px;padding:16px;margin-bottom:12px;border:1px solid var(--green-line);background:var(--green-tint)}
+.statusHero.warn{background:var(--amber-bg);border-color:var(--amber-line)}
+.statusHero.bad{background:var(--red-bg);border-color:var(--red-line)}
+.statusHero .lab{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:800;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--green-dk);margin-bottom:8px}
+.statusHero.warn .lab{color:var(--amber)} .statusHero.bad .lab{color:var(--red)}
+.statusHero .lab i{width:7px;height:7px;border-radius:50%;background:currentColor;animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+.statusHero .big{font-size:24px;font-weight:800;letter-spacing:-.03em;line-height:1.15;margin-bottom:4px}
+.statusHero .small{font-size:12.5px;color:var(--ink-2);line-height:1.5}
+
+.detected{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);
+  border-radius:999px;padding:4px 10px;font-size:10.5px;font-weight:700;color:var(--ink-3);margin-top:10px}
+.detected b{color:var(--ink);font-weight:800}
+
+.pro{display:flex;align-items:center;gap:11px}
+.pro .av{width:44px;height:44px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;
+  font-weight:800;font-size:15px;flex:0 0 auto}
+.pro .nm{font-size:14.5px;font-weight:800}
+.pro .mt{font-size:11.5px;color:var(--ink-3)}
+.pro .vf{margin-left:auto;font-size:10px;font-weight:800;color:var(--green-dk);background:var(--green-tint);
+  border:1px solid var(--green-line);border-radius:999px;padding:4px 9px;text-align:center;line-height:1.25}
+
+.btn{display:block;width:100%;text-align:center;border:0;border-radius:14px;padding:14px 12px;font-size:14px;
+  font-weight:800;cursor:pointer;margin-bottom:9px;letter-spacing:-.01em}
+.btn.primary{background:var(--green);color:#fff}
+.btn.primary:hover{background:var(--green-dk)}
+.btn.dark{background:var(--ink);color:#fff}
+.btn.ghost{background:#fff;color:var(--ink);border:1.5px solid var(--line)}
+.btn.ghost:hover{border-color:var(--ink)}
+.btn.danger{background:var(--red);color:#fff}
+.btn.disabled{background:var(--surf-2);color:var(--ink-4);cursor:not-allowed;border:1px solid var(--line)}
+.btn .sm{display:block;font-size:11px;font-weight:600;opacity:.85;margin-top:3px}
+
+.rowbtn{display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:#fff;cursor:pointer;
+  border:1px solid var(--line);border-radius:14px;padding:13px;margin-bottom:9px;color:inherit}
+.rowbtn:hover{border-color:var(--ink)}
+.rowbtn .ic{width:34px;height:34px;border-radius:10px;background:var(--surf-2);display:grid;place-items:center;
+  font-size:15px;flex:0 0 auto}
+.rowbtn .t{font-size:13.5px;font-weight:700;display:block}
+.rowbtn .s{font-size:11px;color:var(--ink-3);display:block;margin-top:2px;line-height:1.35}
+.rowbtn .ch{margin-left:auto;color:var(--ink-4);font-size:16px;flex:0 0 auto}
+.rowbtn .tag{margin-left:auto;font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;
+  padding:4px 7px;border-radius:6px;flex:0 0 auto}
+.tag.auto{background:var(--green-tint);color:var(--green-dk)}
+.tag.human{background:var(--blue-bg);color:var(--blue)}
+
+.tasks{list-style:none;margin:0;padding:0}
+.tasks li{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px dashed var(--line);font-size:13px}
+.tasks li:last-child{border-bottom:0}
+.tasks .bx{width:19px;height:19px;border-radius:6px;border:1.6px solid var(--line);flex:0 0 auto;display:grid;
+  place-items:center;font-size:11px;color:#fff}
+.tasks li.done .bx{background:var(--green);border-color:var(--green)}
+.tasks li.done .nm{color:var(--ink-3);text-decoration:line-through}
+.tasks .tm{margin-left:auto;font-size:11px;color:var(--ink-4);font-variant-numeric:tabular-nums}
+.progress{height:6px;border-radius:99px;background:var(--surf-2);overflow:hidden;margin:4px 0 12px}
+.progress i{display:block;height:100%;background:var(--green);border-radius:99px;transition:width .5s ease}
+
+.tl{list-style:none;margin:0;padding:0}
+.tl li{display:flex;gap:11px;padding-bottom:13px;position:relative}
+.tl li:not(:last-child):before{content:"";position:absolute;left:5px;top:15px;bottom:0;width:2px;background:var(--line)}
+.tl .p{width:12px;height:12px;border-radius:50%;background:var(--line);flex:0 0 auto;margin-top:3px;z-index:1}
+.tl li.sys .p{background:var(--ink)} .tl li.ok .p{background:var(--green)}
+.tl li.warn .p{background:var(--amber)} .tl li.bad .p{background:var(--red)}
+.tl .tx{font-size:12.5px;line-height:1.45}
+.tl .mt{font-size:10.5px;color:var(--ink-4);margin-top:2px;font-weight:600}
+.tl .src{display:inline-block;font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+  background:var(--surf-2);color:var(--ink-3);border-radius:5px;padding:2px 5px;margin-left:6px;vertical-align:1px}
+
+.kv{display:flex;justify-content:space-between;gap:12px;font-size:12.5px;padding:7px 0;border-bottom:1px dashed var(--line)}
+.kv:last-child{border-bottom:0}
+.kv .k{color:var(--ink-3)} .kv .v{font-weight:700;text-align:right}
+
+.toast{position:absolute;left:14px;right:14px;top:78px;z-index:30;background:var(--ink);color:#fff;border-radius:14px;
+  padding:12px 14px;font-size:12.5px;line-height:1.45;box-shadow:0 10px 30px rgba(0,0,0,.3);
+  transform:translateY(-16px);opacity:0;pointer-events:none;transition:.35s}
+.toast.show{transform:translateY(0);opacity:1}
+.toast b{display:block;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--green);margin-bottom:3px}
+
+.sheetWrap{position:absolute;inset:0;z-index:35;display:none}
+.sheetWrap.on{display:block}
+.sheetWrap .scrim{position:absolute;inset:0;background:rgba(12,12,12,.42)}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:26px 26px 0 0;padding:8px 16px 22px;
+  max-height:86%;overflow-y:auto}
+.sheet .grab{width:38px;height:4px;border-radius:99px;background:var(--line);margin:6px auto 14px}
+
+.evi{background:var(--surf);border:1px solid var(--line);border-radius:13px;padding:11px 12px;margin:10px 0 4px}
+.evi .t{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin-bottom:7px}
+.evi ul{margin:0;padding-left:15px;font-size:11.5px;color:var(--ink-2);line-height:1.7}
+
+.stepper{list-style:none;margin:6px 0 0;padding:0}
+.stepper li{display:flex;gap:10px;padding-bottom:14px;position:relative}
+.stepper li:not(:last-child):before{content:"";position:absolute;left:8px;top:18px;bottom:0;width:2px;background:var(--line)}
+.stepper li.done:not(:last-child):before{background:var(--green)}
+.stepper .c{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);background:#fff;flex:0 0 auto;
+  display:grid;place-items:center;font-size:10px;color:#fff;z-index:1}
+.stepper li.done .c{background:var(--green);border-color:var(--green)}
+.stepper li.live .c{border-color:var(--green);box-shadow:0 0 0 3px rgba(5,172,95,.2)}
+.stepper .t{font-size:13px;font-weight:700} .stepper .s{font-size:11px;color:var(--ink-3);margin-top:2px}
+.stepper li.pending .t{color:var(--ink-4);font-weight:600}
+
+.banner{border-radius:12px;padding:10px 12px;font-size:11.5px;line-height:1.5;margin-bottom:12px}
+.banner.grey{background:var(--surf-2);color:var(--ink-3)}
+.banner.blue{background:var(--blue-bg);color:var(--blue)}
+
+/* ---------- annotation rail ---------- */
+.note h3{font-size:16px;margin:0 0 2px;font-weight:800;letter-spacing:-.01em}
+.note .chip{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;
+  background:var(--green);color:#fff;border-radius:6px;padding:4px 8px;margin-bottom:9px}
+.note .chip.grey{background:#8A94A0}
+.note dl{margin:0}
+.note dt{font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);
+  margin-top:14px;margin-bottom:4px}
+.note dd{margin:0;font-size:13px;line-height:1.55}
+.note .why{margin-top:16px;padding-top:14px;border-top:1px dashed var(--card-line);font-size:12.5px;
+  line-height:1.6;color:var(--muted)}
+.note .why b{color:var(--page-fg)}
+.legend{font-size:11.5px;color:var(--muted);line-height:1.6;margin:0}
+.legend b{color:var(--page-fg)}
+.foot{margin-top:26px;font-size:11.5px;color:var(--muted);line-height:1.6;max-width:90ch}
+.foot b{color:var(--page-fg)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="head">
+    <div>
+      <div class="kicker"><i></i> Feature prototype · Pronto</div>
+      <h1>Self-serve recovery with <span class="g">live visit status</span></h1>
+      <p>One screen that shows the visit happening live <em>and</em> lets the customer fix what goes wrong without
+         reaching a human. Pick a scenario on the left and press play — the phone runs it in real time.</p>
+    </div>
+    <div class="modeSwitch" id="modeSwitch">
+      <button data-mode="new" class="on">Proposed</button>
+      <button data-mode="today">Today</button>
+    </div>
+  </div>
+
+  <div class="stage">
+
+    <!-- LEFT: controls -->
+    <div class="col-ctrl">
+      <div class="panel">
+        <h2>Scenario</h2>
+        <p class="hint">Same booking, three ways it can go. The prototype only differs in what the system detects.</p>
+        <div class="scn" id="scnList"></div>
+        <div class="transport">
+          <button id="btnPlay" class="primary">▶ Play</button>
+          <button id="btnSkip">Next event ⇥</button>
+          <button id="btnReset">↺</button>
+        </div>
+        <div class="clockRow">
+          <div>
+            <div class="lbl">Visit clock</div>
+            <div class="big" id="clockTxt">10:30 AM</div>
+          </div>
+          <div style="text-align:right">
+            <div class="lbl">Elapsed</div>
+            <div class="big" id="elapsedTxt">0 min</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>State machine</h2>
+        <p class="hint">The missing middle: today a booking has two visible states — <b>booked</b> and <b>done</b>.</p>
+        <div class="ladder" id="ladder"></div>
+      </div>
+    </div>
+
+    <!-- CENTER: device -->
+    <div>
+      <div class="device">
+        <div class="screen">
+          <div class="notch"></div>
+          <div class="statusbar"><span id="sbClock">10:30</span><span>◍ ▮▮▮ ▯</span></div>
+          <div class="appbar" id="appbar"></div>
+          <div class="toast" id="toast"></div>
+          <div class="body" id="screenBody"></div>
+          <div class="sheetWrap" id="sheetWrap">
+            <div class="scrim" data-close="1"></div>
+            <div class="sheet" id="sheet"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: annotation -->
+    <div class="col-note">
+      <div class="panel note" id="noteBox"></div>
+      <div class="panel">
+        <h2>How to read this</h2>
+        <p class="legend">
+          <b>Detected automatically</b> badges mark every transition the <em>system</em> notices — the customer is never
+          the sensor.<br><br>
+          <b>Auto</b> tags on issue categories are the ones checkable against data Pronto already has (GPS pings,
+          timestamps, task log, payment mode). Those resolve without a queue.<br><br>
+          <b>Human</b> tags are the genuinely ambiguous cases — a much smaller queue than "everything".
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+  <p class="foot">
+    <b>Scope of this prototype:</b> customer-side only. Dispatch, payments, and the Pro app are mocked with scripted
+    data — the prototype's job is to prove the interaction model, not the infrastructure.
+    <b>The "Today" view</b> is a reconstruction of the current experience assembled from public app-store reviews, the
+    live withpronto.com site, and press coverage — it is illustrative, not a screenshot of Pronto's app.
+    Money, names, and timings are fictional sample data.
+  </p>
+</div>
+
+<script>
+/* =========================================================================
+   Sample booking
+   ========================================================================= */
+const BASE_H = 10, BASE_M = 30;            // visit clock starts 10:30 AM
+const TICK_MS = 520;                       // 1 simulated minute per tick
+
+const BOOKING = {
+  id: "PR-8241",
+  service: "Kitchen deep clean + dishes",
+  price: 549,
+  addr: "B-402, Vipul Belmonte · Sector 53, Gurgaon",
+  pro: { name: "Sunita Devi", initials: "SD", rating: 4.9, visits: 1240 }
+};
+const TASKS = ["Dishes & sink", "Stove & counters", "Cabinet fronts", "Floor sweep & mop", "Trash out"];
+
+/* =========================================================================
+   Scenarios — ordered event scripts on the simulated clock
+   Every event carries who detected it, so the UI can prove it wasn't the customer.
+   ========================================================================= */
+const SCENARIOS = {
+  ontime: {
+    label: "Arrives on time",
+    sub: "The happy path. Recovery never fires — visibility is the whole feature.",
+    events: [
+      {t:0,  state:"ASSIGNED",  src:"sys", kind:"ok",   eta:[12,16], text:"Sunita Devi assigned to your booking"},
+      {t:2,  state:"EN_ROUTE",  src:"pro", kind:"ok",   eta:[11,14], text:"Sunita started travelling to your address"},
+      {t:9,  state:"EN_ROUTE",  src:"sys", kind:"ok",   eta:[2,4],   text:"Sunita is 2 minutes away", near:true},
+      {t:11, state:"ARRIVED",   src:"pro", kind:"ok",                text:"Sunita reached your door"},
+      {t:12, state:"IN_PROGRESS",src:"sys",kind:"ok",                text:"Visit started"},
+      {t:19, task:0}, {t:27, task:1}, {t:36, task:2}, {t:48, task:3}, {t:54, task:4},
+      {t:56, state:"COMPLETED", src:"sys", kind:"ok",                text:"Visit completed · all 5 tasks confirmed"}
+    ]
+  },
+
+  late: {
+    label: "Runs late",
+    sub: "The committed window slips. The app says so first, and pays the difference without being asked.",
+    events: [
+      {t:0,  state:"ASSIGNED", src:"sys", kind:"ok",   eta:[12,16], text:"Sunita Devi assigned to your booking"},
+      {t:2,  state:"EN_ROUTE", src:"pro", kind:"ok",   eta:[11,14], text:"Sunita started travelling to your address"},
+      {t:12, state:"SLIPPING", src:"sys", kind:"warn", eta:[15,17], text:"Committed window missed · revised arrival 10:57",
+             toast:{h:"Detected automatically", b:"Sunita is held up in traffic near Golf Course Road. New arrival: 10:57."}},
+      {t:13, credit:75, src:"sys", kind:"ok", text:"₹75 delay credit applied automatically",
+             toast:{h:"No need to ask", b:"₹75 credited to your Pronto wallet because we missed the window we committed to."}},
+      {t:26, state:"ARRIVED",  src:"pro", kind:"ok",   text:"Sunita reached your door"},
+      {t:27, state:"IN_PROGRESS", src:"sys", kind:"ok", text:"Visit started"},
+      {t:34, task:0}, {t:42, task:1}, {t:51, task:2}, {t:63, task:3}, {t:69, task:4},
+      {t:71, state:"COMPLETED", src:"sys", kind:"ok", text:"Visit completed · all 5 tasks confirmed"}
+    ]
+  },
+
+  noshow: {
+    label: "Never arrives",
+    sub: "The expensive one. No-show is confirmed by the system and refunded in one tap — no ticket, no queue.",
+    events: [
+      {t:0,  state:"ASSIGNED", src:"sys", kind:"ok",   eta:[12,16], text:"Sunita Devi assigned to your booking"},
+      {t:2,  state:"EN_ROUTE", src:"pro", kind:"ok",   eta:[11,14], text:"Sunita started travelling to your address"},
+      {t:12, state:"SLIPPING", src:"sys", kind:"warn", eta:[15,17], text:"Committed window missed · revised arrival 10:57",
+             toast:{h:"Detected automatically", b:"Sunita is held up. New arrival: 10:57. You'll be told again if this slips."}},
+      {t:13, credit:75, src:"sys", kind:"ok", text:"₹75 delay credit applied automatically"},
+      {t:27, state:"UNRESPONSIVE", src:"sys", kind:"warn", text:"No location update from Sunita for 6 minutes · checking",
+             toast:{h:"We're on it", b:"We've lost contact with your Pro and are checking. You don't need to do anything yet."}},
+      {t:32, state:"NO_SHOW", src:"sys", kind:"bad", text:"No-show confirmed · 15 min past revised arrival",
+             toast:{h:"Confirmed no-show", b:"Your Pro didn't arrive. Your money is ready to come back — one tap, no ticket."}}
+    ]
+  }
+};
+
+const STATE_META = {
+  ASSIGNED:     {n:"Assigned",              d:"Pro named, live ETA window",        tone:"ok"},
+  EN_ROUTE:     {n:"On the way",            d:"Live ETA, distance closing",        tone:"ok"},
+  SLIPPING:     {n:"ETA slipping",          d:"Revised window + automatic credit", tone:"alert"},
+  UNRESPONSIVE: {n:"Pro unreachable",       d:"System checking, customer told",    tone:"alert"},
+  NO_SHOW:      {n:"Grace period exceeded", d:"One-tap refund, no ticket",         tone:"bad"},
+  ARRIVED:      {n:"Arrived",               d:"Start time stamped",                tone:"ok"},
+  IN_PROGRESS:  {n:"In progress",           d:"Task checklist ticking live",       tone:"ok"},
+  COMPLETED:    {n:"Completed",             d:"Final summary, nothing to ask",     tone:"ok"}
+};
+const LADDER_ORDER = ["ASSIGNED","EN_ROUTE","SLIPPING","UNRESPONSIVE","NO_SHOW","ARRIVED","IN_PROGRESS","COMPLETED"];
+
+/* Annotation text — mirrors the feature's state table */
+const NOTES = {
+  ASSIGNED: {
+    sees: "Pro's name and photo, and a live ETA <b>window</b> — a range, not a fixed marketing promise.",
+    does: "Nothing needed yet. This state exists purely so the customer never has to wonder.",
+    why: "The ETA is shown as <b>10:42–10:46</b>, not \"15 minutes\". A range that's honest beats a number that's impressive — because every promise here is one the app has to keep."
+  },
+  EN_ROUTE: {
+    sees: "The window narrowing in real time as the Pro closes distance.",
+    does: "Nothing needed. Reporting an issue is available, but there's nothing to report.",
+    why: "Today this whole stretch is invisible. Invisibility is what sends people to support to ask a question the app could have answered itself."
+  },
+  SLIPPING: {
+    sees: "\"Running later than expected\" with a <b>revised</b> committed time — surfaced the moment it's true.",
+    does: "Wait with a real number, or open a structured report. Neither requires a human.",
+    why: "The system is the sensor, not the customer. Nobody should have to notice it's been 40 minutes — and the delay credit lands <b>before</b> anyone asks, which is what turns a failure into evidence of competence."
+  },
+  UNRESPONSIVE: {
+    sees: "That Pronto has lost contact and is already checking — stated plainly, before the customer suspects it.",
+    does: "Still nothing. The clock to automatic resolution is already running.",
+    why: "Volunteering bad news early is cheaper than defending it later. This is also the trigger that pre-dispatches a backup Pro behind the scenes."
+  },
+  NO_SHOW: {
+    sees: "\"Your Pro didn't arrive\" — flagged automatically, not because the customer complained.",
+    does: "One tap → full refund initiated instantly, with visible status. No ticket, no waiting, no explaining.",
+    why: "A no-show is a no-show because the GPS and timestamps say so — not because a customer describes it convincingly. That's the mechanism that removes tickets rather than answering them faster."
+  },
+  ARRIVED: {
+    sees: "A stamped start time — <b>\"Started at 10:42\"</b>.",
+    does: "Nothing to fix. This is the anti-black-box part.",
+    why: "A timestamp is also evidence. Everything logged here is what later makes automatic resolution possible instead of he-said-she-said."
+  },
+  IN_PROGRESS: {
+    sees: "The task checklist ticking off live, each with its own completion time.",
+    does: "Nothing needed — but the completeness of the list is what makes a later \"job wasn't done\" claim checkable.",
+    why: "Visibility during the visit is what powers recovery after it. The two halves of this feature are the same system seen at two moments."
+  },
+  COMPLETED: {
+    sees: "A final summary: what was done, when, what was charged, what was credited.",
+    does: "Nothing to fix, nothing to ask — the stated goal for the majority of visits.",
+    why: "Success for this feature is a support contact that never happens. The metric is contact rate per booking, trending down."
+  }
+};
+
+const TODAY_NOTE = {
+  chip: "Today · reconstructed",
+  title: "Two states: booked, and done",
+  sees: "A confirmation that never changes. The same card at minute 3 and at minute 45.",
+  does: "Nothing. The only path is Help → FAQ → a chat window that is staffed 7 AM–10 PM, against booking sold as 24/7.",
+  why: "This is the gap the feature closes. The customer becomes the sensor, the free-text box becomes the interface, and a queue becomes the resolution — for a failure the system could have detected, classified, and refunded on its own."
+};
+
+/* Issue categories — auto-resolvable vs genuinely human */
+const CATEGORIES = [
+  { id:"noshow", icon:"⏰", t:"My Pro hasn't arrived", s:"Checked against arrival pings", mode:"auto",
+    evidence:["Last GPS ping from Pro's device","Committed arrival window vs. current time","Grace period rule for this city"],
+    outcome:{ title:"No-show confirmed", body:"Your Pro's last location update was 14 minutes ago and no arrival was recorded. Full refund of ₹549 initiated.", act:"refund" } },
+  { id:"late", icon:"🕒", t:"My Pro is very late", s:"Checked against the committed window", mode:"auto",
+    evidence:["Committed arrival window","Actual/estimated arrival","Delay-credit policy tier"],
+    outcome:{ title:"Delay confirmed", body:"You were quoted 10:42–10:46 and the revised arrival is 10:57. A ₹75 credit has been applied — you can also cancel free of charge.", act:"none" } },
+  { id:"incomplete", icon:"🧹", t:"A task wasn't done", s:"Checked against the visit checklist", mode:"auto",
+    evidence:["Task checklist with completion timestamps","Visit duration vs. expected","Before/after photos, if captured"],
+    outcome:{ title:"Checked against the visit log", body:"2 of 5 tasks were not marked complete. ₹220 has been refunded for the unfinished portion — no review needed.", act:"none" } },
+  { id:"cash", icon:"💵", t:"My Pro asked for cash", s:"Policy violation · logged instantly", mode:"auto",
+    evidence:["Booking is fully prepaid — ₹549 already settled","No cash is owed on any Pronto visit","Report attached to the Pro's record"],
+    outcome:{ title:"Logged and escalated", body:"You owe nothing. This is a policy violation and has been attached to the Pro's record for review — you don't need to prove it to anyone.", act:"none" } },
+  { id:"safety", icon:"🛡", t:"I have a safety concern", s:"Always a live human, 24/7", mode:"human",
+    evidence:["Live visit record shared with the safety desk","Your address and the Pro's ID pre-attached"],
+    outcome:{ title:"Connecting you now", body:"A safety specialist is joining — 24/7, never queued. They already have the visit record, so you won't be asked to re-explain anything.", act:"none" } },
+  { id:"other", icon:"💬", t:"Something else", s:"Free text — deliberately the last option", mode:"human",
+    evidence:["Full visit timeline attached automatically","Booking, payment, and Pro details attached"],
+    outcome:{ title:"Sent with your visit attached", body:"A specialist will pick this up with the whole visit record already loaded. If they hand it over, the next agent inherits the context — you never re-explain.", act:"none" } }
+];
+
+/* =========================================================================
+   Runtime state
+   ========================================================================= */
+let S = {};
+function freshState(scn){
+  return {
+    scn, t:0, playing:false, mode:(S.mode||"new"),
+    state:"ASSIGNED", eta:[12,16], credit:0,
+    tasks:TASKS.map(x=>({name:x,done:false,at:null})),
+    log:[], cursor:0,
+    view:"status", sheet:null, chosen:null,
+    refund:null,           // {at, stage}
+    issue:null,            // {cat, at, resolved}
+    todayHelp:0            // Today-mode drill depth
+  };
+}
+let timer=null, toastTimer=null;
+
+/* ---------- clock helpers ---------- */
+function fmt(t, ampm=true){
+  let m = BASE_H*60 + BASE_M + t;
+  let h = Math.floor(m/60)%24, mm = m%60;
+  const suf = h>=12 ? "PM" : "AM";
+  let hh = h%12; if(hh===0) hh=12;
+  return hh+":"+String(mm).padStart(2,"0")+(ampm? " "+suf : "");
+}
+const esc = s => String(s).replace(/[&<>]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+
+/* =========================================================================
+   Engine
+   ========================================================================= */
+function applyEvent(ev){
+  if(ev.state) S.state = ev.state;
+  if(ev.eta) S.eta = ev.eta;
+  if(ev.credit) S.credit += ev.credit;
+  if(ev.task !== undefined){
+    const tk = S.tasks[ev.task];
+    tk.done = true; tk.at = S.t;
+    S.log.push({t:S.t, src:"pro", kind:"ok", text:"“"+tk.name+"” marked complete"});
+    return;
+  }
+  S.log.push({t:S.t, src:ev.src||"sys", kind:ev.kind||"ok", text:ev.text});
+  if(ev.toast) showToast(ev.toast.h, ev.toast.b);
+}
+
+function tick(){
+  const evs = SCENARIOS[S.scn].events;
+  // advance refund pipeline independently
+  if(S.refund && S.refund.stage < 2 && S.t - S.refund.at >= 2) S.refund.stage = 1;
+  if(S.refund && S.refund.stage < 2 && S.t - S.refund.at >= 5) S.refund.stage = 2;
+  if(S.issue && !S.issue.resolved && S.t - S.issue.at >= 1) S.issue.resolved = true;
+
+  if(S.cursor >= evs.length){
+    if(!S.refund && !S.issue){ pause(); }
+    S.t++; render(); return;
+  }
+  S.t++;
+  while(S.cursor < evs.length && evs[S.cursor].t <= S.t){ applyEvent(evs[S.cursor]); S.cursor++; }
+  render();
+}
+function play(){ if(S.playing) return; S.playing=true; timer=setInterval(tick, TICK_MS); render(); }
+function pause(){ S.playing=false; clearInterval(timer); timer=null; render(); }
+function skip(){
+  const evs = SCENARIOS[S.scn].events;
+  if(S.cursor >= evs.length){ for(let i=0;i<4;i++) tick(); return; }
+  const target = evs[S.cursor].t;
+  while(S.t < target) tick();
+  tick();
+}
+function reset(scn){
+  pause(); S=Object.assign(freshState(scn||S.scn),{mode:S.mode});
+  const first = SCENARIOS[S.scn].events[0];
+  applyEvent(first); S.cursor=1; render();
+}
+
+function showToast(h,b){
+  const el = document.getElementById("toast");
+  el.innerHTML = "<b>"+esc(h)+"</b>"+esc(b);
+  el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>el.classList.remove("show"), 4200);
+}
+
+/* =========================================================================
+   Phone screens — PROPOSED
+   ========================================================================= */
+function screenStatus(){
+  const st=S.state, h=[];
+  const pro = BOOKING.pro;
+
+  /* hero */
+  let tone="", lab="Live", big="", small="";
+  if(st==="ASSIGNED"||st==="EN_ROUTE"){
+    const lo = fmt(S.eta[0]===undefined?12:S.eta[0]), hi = fmt(S.eta[1]);
+    const mins = Math.max(0, S.eta[0]-S.t+ (S.cursor?0:0));
+    big = "Arrives "+lo.replace(" AM","")+"–"+hi;
+    small = st==="ASSIGNED" ? "Sunita is confirming and heading out."
+          : "On the way · we'll tell you the moment this changes.";
+    lab="On the way";
+  } else if(st==="SLIPPING"){
+    tone="warn"; lab="Running late"; big="Now arriving 10:57";
+    small="You were quoted 10:42–10:46. We missed it, so a ₹75 credit is already on your wallet.";
+  } else if(st==="UNRESPONSIVE"){
+    tone="warn"; lab="Checking"; big="We've lost contact with Sunita";
+    small="No location update for 6 minutes. We're checking and lining up a backup Pro. You don't need to do anything.";
+  } else if(st==="NO_SHOW"){
+    tone="bad"; lab="No-show confirmed"; big="Sunita didn't arrive";
+    small="15 minutes past the revised arrival time. Your ₹549 is ready to come back.";
+  } else if(st==="ARRIVED"){
+    lab="At your door"; big="Sunita has arrived"; small="Waiting to be let in.";
+  } else if(st==="IN_PROGRESS"){
+    const startedAt = S.log.find(l=>l.text==="Visit started");
+    lab="Visit in progress"; big="Started at "+fmt(startedAt?startedAt.t:13).replace(" AM","");
+    small = S.tasks.filter(t=>t.done).length+" of "+S.tasks.length+" tasks done.";
+  } else if(st==="COMPLETED"){
+    lab="Completed"; big="Visit completed";
+    small="All "+S.tasks.length+" tasks confirmed. Nothing outstanding.";
+  }
+
+  const lastSys = [...S.log].reverse().find(l=>l.src==="sys");
+  h.push('<div class="statusHero '+tone+'">'+
+    '<div class="lab"><i></i>'+esc(lab)+'</div>'+
+    '<div class="big">'+big+'</div>'+
+    '<div class="small">'+small+'</div>'+
+    (lastSys? '<div class="detected">⦿ Detected automatically at <b>'+fmt(lastSys.t)+'</b></div>':'')+
+  '</div>');
+
+  /* NO-SHOW recovery — the one-tap moment */
+  if(st==="NO_SHOW" && !S.refund){
+    h.push('<div class="card bad">'+
+      '<div class="h-md">Get your money back now</div>'+
+      '<div class="sub" style="margin-bottom:12px">No ticket, no explanation, no waiting for an agent. '+
+      'We already know what happened.</div>'+
+      '<button class="btn danger" data-act="refund">Refund ₹'+BOOKING.price+' now'+
+        '<span class="sm">Confirmed by GPS + timestamps · instant</span></button>'+
+      '<button class="btn ghost" data-act="rebook">Send another Pro instead'+
+        '<span class="sm">Priority dispatch · you pay nothing until they arrive</span></button>'+
+    '</div>');
+  }
+
+  /* refund tracker */
+  if(S.refund) h.push(refundCard());
+
+  /* issue tracker */
+  if(S.issue) h.push(issueCard());
+
+  /* credit */
+  if(S.credit && st!=="COMPLETED"){
+    h.push('<div class="card tint" style="display:flex;gap:11px;align-items:center">'+
+      '<div style="font-size:20px">₹</div><div>'+
+      '<div style="font-size:13px;font-weight:800">₹'+S.credit+' delay credit applied</div>'+
+      '<div style="font-size:11.5px;color:var(--ink-3);line-height:1.45">Added automatically because we missed the window we committed to. You didn\'t have to ask.</div>'+
+      '</div></div>');
+  }
+
+  /* pro card */
+  h.push('<div class="card"><div class="pro">'+
+    '<div class="av">'+pro.initials+'</div>'+
+    '<div><div class="nm">'+pro.name+'</div>'+
+    '<div class="mt">★ '+pro.rating+' · '+pro.visits.toLocaleString("en-IN")+' visits</div></div>'+
+    '<div class="vf">Background<br>verified</div></div>'+
+    '<div style="display:flex;gap:8px;margin-top:12px">'+
+      '<button class="btn ghost" style="margin:0;padding:10px" data-act="noop">Call</button>'+
+      '<button class="btn ghost" style="margin:0;padding:10px" data-act="noop">Chat</button>'+
+    '</div></div>');
+
+  /* task checklist */
+  if(st==="IN_PROGRESS"||st==="COMPLETED"){
+    const done=S.tasks.filter(t=>t.done).length;
+    h.push('<div class="eyebrow">What Sunita is doing</div>');
+    h.push('<div class="card"><div class="progress"><i style="width:'+(done/S.tasks.length*100)+'%"></i></div>'+
+      '<ul class="tasks">'+S.tasks.map(t=>
+        '<li class="'+(t.done?"done":"")+'"><span class="bx">'+(t.done?"✓":"")+'</span>'+
+        '<span class="nm">'+esc(t.name)+'</span>'+
+        '<span class="tm">'+(t.done? fmt(t.at,false) : "—")+'</span></li>').join("")+
+      '</ul></div>');
+  }
+
+  /* completed summary */
+  if(st==="COMPLETED"){
+    const started = S.log.find(l=>l.text==="Visit started");
+    const ended   = S.log.find(l=>l.text.indexOf("Visit completed")===0);
+    h.push('<div class="eyebrow">Summary</div><div class="card">'+
+      '<div class="kv"><span class="k">Service</span><span class="v">'+BOOKING.service+'</span></div>'+
+      '<div class="kv"><span class="k">Started · finished</span><span class="v">'+
+        fmt(started?started.t:13)+' · '+fmt(ended?ended.t:S.t)+'</span></div>'+
+      '<div class="kv"><span class="k">Tasks confirmed</span><span class="v">'+S.tasks.length+' of '+S.tasks.length+'</span></div>'+
+      '<div class="kv"><span class="k">Charged</span><span class="v">₹'+BOOKING.price+'</span></div>'+
+      (S.credit?'<div class="kv"><span class="k">Delay credit</span><span class="v" style="color:var(--green-dk)">+₹'+S.credit+'</span></div>':'')+
+      '</div>'+
+      '<button class="btn primary" data-act="noop">Rate this visit</button>');
+  }
+
+  /* actions */
+  if(st!=="COMPLETED"){
+    h.push('<div class="eyebrow">If something\'s wrong</div>');
+    h.push('<button class="rowbtn" data-act="report"><span class="ic">⚑</span>'+
+      '<span><span class="t">Report an issue</span><span class="s">Pick what happened — most are fixed on the spot</span></span>'+
+      '<span class="ch">›</span></button>');
+    h.push('<button class="rowbtn" data-act="cancel"><span class="ic">✕</span>'+
+      '<span><span class="t">Cancel this visit</span><span class="s">'+
+        (st==="SLIPPING"||st==="UNRESPONSIVE"||st==="NO_SHOW" ? "Free — we missed our committed time" : "See the exact refund before you confirm")+
+      '</span></span><span class="ch">›</span></button>');
+  }
+
+  /* timeline */
+  h.push('<div class="eyebrow">Everything that happened</div>');
+  h.push('<div class="card"><ul class="tl">'+[...S.log].reverse().map(l=>
+    '<li class="'+l.kind+'"><span class="p"></span><div><div class="tx">'+esc(l.text)+
+    '<span class="src">'+(l.src==="sys"?"Pronto":l.src==="pro"?"Sunita":"You")+'</span></div>'+
+    '<div class="mt">'+fmt(l.t)+'</div></div></li>').join("")+'</ul></div>');
+
+  /* booking meta */
+  h.push('<div class="card flat" style="margin-top:4px">'+
+    '<div class="kv"><span class="k">Booking</span><span class="v">'+BOOKING.id+'</span></div>'+
+    '<div class="kv"><span class="k">Address</span><span class="v" style="font-weight:600;font-size:11.5px">'+BOOKING.addr+'</span></div>'+
+    '<div class="kv"><span class="k">Paid</span><span class="v">₹'+BOOKING.price+' · prepaid, no cash due</span></div>'+
+  '</div>');
+
+  return h.join("");
+}
+
+function refundCard(){
+  const r=S.refund;
+  const steps=[
+    {t:"Refund approved automatically", s:"No review needed — the no-show is in the visit record · "+fmt(r.at), done:true},
+    {t:"Sent to your bank", s:r.stage>=1? "HDFC •••• 4417 · "+fmt(r.at+2) : "Usually within 2 minutes", done:r.stage>=1},
+    {t:"Credited to your account", s:r.stage>=2? "Completed · "+fmt(r.at+5) : "Usually within a few hours — we'll tell you, you won't have to check", done:r.stage>=2}
+  ];
+  return '<div class="card tint"><div class="h-md">₹'+BOOKING.price+' refund · in progress</div>'+
+    '<div class="sub" style="margin-bottom:6px">You can reopen this any time. It will never go quiet on you.</div>'+
+    '<ul class="stepper">'+steps.map((s,i)=>
+      '<li class="'+(s.done?"done":(i===0||steps[i-1].done?"live":"pending"))+'">'+
+      '<span class="c">'+(s.done?"✓":"")+'</span><div><div class="t">'+s.t+'</div><div class="s">'+s.s+'</div></div></li>'
+    ).join("")+'</ul>'+
+    '<button class="btn ghost" style="margin-top:6px" data-act="rebook">Book a replacement Pro'+
+    '<span class="sm">Priority dispatch · nothing charged until they arrive</span></button></div>';
+}
+
+function issueCard(){
+  const c=CATEGORIES.find(x=>x.id===S.issue.cat);
+  const auto = c.mode==="auto";
+  const steps=[
+    {t:"Reported", s:fmt(S.issue.at)+" · you picked a category, not a paragraph", done:true},
+    {t: auto?"Checked against the visit record":"Picked up by a specialist",
+     s: S.issue.resolved? (auto? "Automatic · "+fmt(S.issue.at+1) : "Live now · your visit record was attached")
+                        : "Running…", done:S.issue.resolved},
+    {t: auto?"Resolved":"Resolution",
+     s: S.issue.resolved? c.outcome.title : (auto?"Seconds away":"You will not be asked to re-explain"),
+     done:S.issue.resolved && auto}
+  ];
+  return '<div class="card '+(auto?"tint":"")+'"><div class="h-md">'+c.t+'</div>'+
+    '<div class="sub" style="margin-bottom:6px">'+(S.issue.resolved? c.outcome.body : "Checking this against what we already know about your visit.")+'</div>'+
+    '<ul class="stepper">'+steps.map((s,i)=>
+      '<li class="'+(s.done?"done":(i===0||steps[i-1].done?"live":"pending"))+'">'+
+      '<span class="c">'+(s.done?"✓":"")+'</span><div><div class="t">'+s.t+'</div><div class="s">'+s.s+'</div></div></li>'
+    ).join("")+'</ul></div>';
+}
+
+/* ---------- sheets ---------- */
+function sheetReport(){
+  return '<div class="grab"></div>'+
+    '<div class="h-lg">What went wrong?</div>'+
+    '<div class="sub">Pick the closest one. Anything we can check ourselves is resolved on the spot.</div>'+
+    CATEGORIES.map(c=>'<button class="rowbtn" data-cat="'+c.id+'">'+
+      '<span class="ic">'+c.icon+'</span>'+
+      '<span><span class="t">'+c.t+'</span><span class="s">'+c.s+'</span></span>'+
+      '<span class="tag '+(c.mode==="auto"?"auto":"human")+'">'+(c.mode==="auto"?"Auto":"Human")+'</span>'+
+    '</button>').join("")+
+    '<div class="banner grey" style="margin-top:10px">A free-text box is the <b>last</b> option, not the first. '+
+    'Categories are what make automatic resolution possible.</div>';
+}
+
+function sheetConfirm(){
+  const c=CATEGORIES.find(x=>x.id===S.chosen);
+  return '<div class="grab"></div>'+
+    '<div class="h-lg">'+c.t+'</div>'+
+    '<div class="sub">Before you send this, here\'s what we already have. You won\'t need to prove any of it.</div>'+
+    '<div class="evi"><div class="t">Attached automatically</div><ul>'+
+      c.evidence.map(e=>'<li>'+esc(e)+'</li>').join("")+'</ul></div>'+
+    (c.mode==="auto"
+      ? '<div class="banner blue" style="margin-top:12px">This category is checkable against your visit record, so it resolves without a queue.</div>'
+      : '<div class="banner blue" style="margin-top:12px">This one needs a person. Safety concerns are staffed 24/7 and never queued.</div>')+
+    '<button class="btn primary" data-act="submit">'+(c.mode==="auto"?"Resolve this now":"Connect me")+'</button>'+
+    '<button class="btn ghost" data-act="close">Back</button>';
+}
+
+function sheetCancel(){
+  const free = ["SLIPPING","UNRESPONSIVE","NO_SHOW"].includes(S.state);
+  const fee = free? 0 : 40;
+  return '<div class="grab"></div>'+
+    '<div class="h-lg">Cancel this visit?</div>'+
+    '<div class="sub">The exact amount, before you confirm — not after.</div>'+
+    '<div class="card flat">'+
+      '<div class="kv"><span class="k">Paid</span><span class="v">₹'+BOOKING.price+'</span></div>'+
+      '<div class="kv"><span class="k">Cancellation fee</span><span class="v">'+(free? '<span style="color:var(--green-dk)">₹0 — we missed our committed time</span>' : '₹'+fee)+'</span></div>'+
+      (S.credit? '<div class="kv"><span class="k">Delay credit kept</span><span class="v" style="color:var(--green-dk)">₹'+S.credit+'</span></div>':'')+
+      '<div class="kv"><span class="k">You get back</span><span class="v" style="font-size:15px">₹'+(BOOKING.price-fee)+'</span></div>'+
+    '</div>'+
+    '<div class="banner grey">Back on your card by <b>5:00 PM today</b>, with live status you can reopen.</div>'+
+    '<button class="btn danger" data-act="docancel">Cancel and refund ₹'+(BOOKING.price-fee)+'</button>'+
+    '<button class="btn ghost" data-act="close">Keep my booking</button>';
+}
+
+/* =========================================================================
+   Phone screens — TODAY (reconstruction)
+   ========================================================================= */
+function screenToday(){
+  const d=S.todayHelp;
+  if(d===0){
+    const stale = S.t>14;
+    return '<div class="statusHero" style="background:var(--surf);border-color:var(--line)">'+
+        '<div class="lab" style="color:var(--ink-3)">Booking confirmed</div>'+
+        '<div class="big">Arriving in 15 minutes</div>'+
+        '<div class="small">'+BOOKING.service+' · '+BOOKING.addr+'</div>'+
+      '</div>'+
+      (stale? '<div class="card warn"><div style="font-size:12.5px;line-height:1.55">It has been <b>'+S.t+
+        ' minutes</b>. The screen still says the same thing. Nothing here updates, and nothing tells you whether '+
+        'your Pro is coming, stuck, or gone.</div></div>' : '')+
+      '<div class="card"><div class="pro"><div class="av">'+BOOKING.pro.initials+'</div>'+
+        '<div><div class="nm">'+BOOKING.pro.name+'</div><div class="mt">★ '+BOOKING.pro.rating+'</div></div></div></div>'+
+      '<div class="eyebrow">Your options</div>'+
+      '<button class="rowbtn" data-act="help"><span class="ic">?</span>'+
+        '<span><span class="t">Help</span><span class="s">FAQs and contact us</span></span><span class="ch">›</span></button>'+
+      '<button class="rowbtn" data-act="help"><span class="ic">✕</span>'+
+        '<span><span class="t">Cancel booking</span><span class="s">Cancellation policy applies</span></span><span class="ch">›</span></button>'+
+      '<div class="card flat" style="margin-top:16px"><div style="font-size:11.5px;color:var(--ink-3);line-height:1.6">'+
+        'There is no state between <b>booked</b> and <b>done</b>. Whatever is happening out there, this screen '+
+        'looks identical — so the only way to find out is to ask a person.</div></div>';
+  }
+  if(d===1){
+    return '<div class="h-lg">Help</div><div class="sub">Popular questions</div>'+
+      ["How do I reschedule a booking?","What is the cancellation policy?","How is my Pro verified?",
+       "What if my Pro is late?","How do refunds work?"].map(q=>
+        '<button class="rowbtn" data-act="help2"><span class="ic">›</span><span><span class="t" style="font-size:12.5px">'+q+
+        '</span></span></button>').join("")+
+      '<div class="eyebrow">Still need help?</div>'+
+      '<button class="btn ghost" data-act="help2">Chat with us</button>'+
+      '<div class="banner grey">Live chat is available <b>7:00 AM – 10:00 PM</b>.</div>';
+  }
+  if(d===2){
+    return '<div class="h-lg">Chat with us</div>'+
+      '<div class="card flat" style="min-height:120px"><div style="font-size:12.5px;color:var(--ink-3);line-height:1.6">'+
+      'Describe your issue and we\'ll get back to you.</div>'+
+      '<div style="border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:12px;background:#fff;'+
+      'font-size:12.5px;color:var(--ink-4);min-height:86px">Type your message…</div></div>'+
+      '<button class="btn disabled">Send</button>'+
+      '<div class="banner grey">Typical first response: <b>within 24 hours</b>. Your booking details are not attached — '+
+      'you\'ll be asked for the booking ID, the time, and what happened.</div>'+
+      '<div class="card bad" style="margin-top:14px"><div style="font-size:12.5px;line-height:1.6">'+
+      '<b>This is the whole problem in one screen.</b> The customer had to notice the failure, navigate to find this box, '+
+      'describe it in their own words, and wait for a person to judge it — for an outcome the system could have '+
+      'determined by itself from the pings it already has.</div></div>'+
+      '<button class="btn ghost" data-act="backTop">Back to booking</button>';
+  }
+}
+
+/* =========================================================================
+   Render
+   ========================================================================= */
+function render(){
+  /* clocks */
+  document.getElementById("clockTxt").textContent = fmt(S.t);
+  document.getElementById("sbClock").textContent  = fmt(S.t,false);
+  document.getElementById("elapsedTxt").textContent = S.t+" min";
+  document.getElementById("btnPlay").innerHTML = S.playing? "❚❚ Pause" : "▶ Play";
+
+  /* scenario list */
+  document.getElementById("scnList").innerHTML = Object.entries(SCENARIOS).map(([k,v])=>
+    '<button data-scn="'+k+'" class="'+(k===S.scn?"on":"")+'"><span class="dot"></span>'+
+    '<span><span class="t">'+v.label+'</span><span class="s">'+v.sub+'</span></span></button>').join("");
+
+  /* ladder */
+  const seen = SCENARIOS[S.scn].events.filter(e=>e.state).map(e=>e.state);
+  const idxNow = LADDER_ORDER.indexOf(S.state);
+  document.getElementById("ladder").innerHTML = LADDER_ORDER.filter(k=>seen.includes(k)).map((k,i,arr)=>{
+    const m=STATE_META[k], pos=LADDER_ORDER.indexOf(k);
+    const cls = pos===idxNow? "now" : (pos<idxNow? "past":"");
+    return '<div class="step '+cls+' '+(m.tone==="alert"?"alert":m.tone==="bad"?"bad":"")+'">'+
+      '<div class="rail"><div class="pip"></div>'+(i<arr.length-1?'<div class="bar"></div>':'')+'</div>'+
+      '<div class="txt"><div class="n">'+m.n+'</div><div class="d">'+m.d+'</div></div></div>';
+  }).join("");
+
+  /* appbar */
+  const inSub = S.mode==="new" ? false : S.todayHelp>0;
+  document.getElementById("appbar").innerHTML = S.mode==="new"
+    ? '<span class="logo">Pronto</span><span class="ttl" style="font-size:13px;font-weight:700;color:var(--ink-3)">Your visit</span>'+
+      '<span class="sp">'+BOOKING.id+'</span>'
+    : (inSub
+        ? '<button class="back" data-act="backOne">‹</button><span class="ttl">Help</span>'
+        : '<span class="logo">Pronto</span><span class="ttl" style="font-size:13px;font-weight:700;color:var(--ink-3)">Your booking</span><span class="sp">'+BOOKING.id+'</span>');
+
+  /* body */
+  document.getElementById("screenBody").innerHTML = S.mode==="new" ? screenStatus() : screenToday();
+
+  /* sheet */
+  const w=document.getElementById("sheetWrap");
+  if(S.sheet){ w.classList.add("on"); document.getElementById("sheet").innerHTML =
+    S.sheet==="report"? sheetReport() : S.sheet==="confirm"? sheetConfirm() : sheetCancel(); }
+  else w.classList.remove("on");
+
+  /* annotation */
+  const n = document.getElementById("noteBox");
+  if(S.mode==="today"){
+    n.innerHTML = '<span class="chip grey">'+TODAY_NOTE.chip+'</span>'+
+      '<h3>'+TODAY_NOTE.title+'</h3>'+
+      '<dl><dt>What the customer sees</dt><dd>'+TODAY_NOTE.sees+'</dd>'+
+      '<dt>What they can do without a human</dt><dd>'+TODAY_NOTE.does+'</dd></dl>'+
+      '<div class="why">'+TODAY_NOTE.why+'</div>';
+  } else {
+    const meta=STATE_META[S.state], note=NOTES[S.state];
+    n.innerHTML = '<span class="chip">State · '+meta.n+'</span>'+
+      '<h3>'+meta.d+'</h3>'+
+      '<dl><dt>What the customer sees</dt><dd>'+note.sees+'</dd>'+
+      '<dt>What they can do without a human</dt><dd>'+note.does+'</dd></dl>'+
+      '<div class="why">'+note.why+'</div>';
+  }
+}
+
+/* =========================================================================
+   Events
+   ========================================================================= */
+document.getElementById("btnPlay").onclick  = ()=> S.playing? pause() : play();
+document.getElementById("btnSkip").onclick  = ()=>{ const was=S.playing; pause(); skip(); if(was) play(); };
+document.getElementById("btnReset").onclick = ()=> reset();
+
+document.getElementById("scnList").addEventListener("click", e=>{
+  const b=e.target.closest("[data-scn]"); if(!b) return; reset(b.dataset.scn);
+});
+
+document.getElementById("modeSwitch").addEventListener("click", e=>{
+  const b=e.target.closest("[data-mode]"); if(!b) return;
+  S.mode=b.dataset.mode; S.todayHelp=0; S.sheet=null;
+  [...e.currentTarget.children].forEach(c=>{
+    c.classList.toggle("on", c===b); c.classList.toggle("today", c===b && b.dataset.mode==="today");
+  });
+  render();
+});
+
+document.querySelector(".screen").addEventListener("click", e=>{
+  if(e.target.dataset.close){ S.sheet=null; render(); return; }
+  const cat=e.target.closest("[data-cat]");
+  if(cat){ S.chosen=cat.dataset.cat; S.sheet="confirm"; render(); return; }
+  const b=e.target.closest("[data-act]"); if(!b) return;
+  const a=b.dataset.act;
+
+  if(a==="report"){ S.sheet="report"; }
+  else if(a==="cancel"){ S.sheet="cancel"; }
+  else if(a==="close"){ S.sheet= S.sheet==="confirm"? "report" : null; }
+  else if(a==="submit"){
+    S.issue={cat:S.chosen, at:S.t, resolved:false};
+    const c=CATEGORIES.find(x=>x.id===S.chosen);
+    S.log.push({t:S.t, src:"you", kind:"warn", text:"You reported: "+c.t});
+    if(c.outcome.act==="refund" && !S.refund){ S.refund={at:S.t, stage:0}; }
+    S.sheet=null; showToast("Sent with everything attached","No booking ID, no re-explaining. We already have the visit record.");
+    if(!S.playing) play();
+  }
+  else if(a==="refund"){
+    S.refund={at:S.t, stage:0};
+    S.log.push({t:S.t, src:"sys", kind:"ok", text:"Full refund of ₹"+BOOKING.price+" approved automatically"});
+    showToast("Refund approved instantly","₹"+BOOKING.price+" is on its way back. No ticket was created — none was needed.");
+    if(!S.playing) play(); else render();
+  }
+  else if(a==="docancel"){
+    const free=["SLIPPING","UNRESPONSIVE","NO_SHOW"].includes(S.state);
+    S.refund={at:S.t, stage:0};
+    S.log.push({t:S.t, src:"you", kind:"warn", text:"You cancelled the visit"+(free?" · fee waived":"")});
+    S.sheet=null; showToast("Cancelled","₹"+(BOOKING.price-(free?0:40))+" refund started. You can watch it move — it won't go quiet.");
+    if(!S.playing) play();
+  }
+  else if(a==="rebook"){ showToast("Priority dispatch","Looking for the nearest verified Pro. Nothing is charged until someone actually arrives."); }
+  else if(a==="help"){ S.todayHelp=1; }
+  else if(a==="help2"){ S.todayHelp=2; }
+  else if(a==="backOne"){ S.todayHelp=Math.max(0,S.todayHelp-1); }
+  else if(a==="backTop"){ S.todayHelp=0; }
+  render();
+});
+
+/* boot */
+S = freshState("noshow");
+reset("noshow");
+</script>
+</body>
+</html>

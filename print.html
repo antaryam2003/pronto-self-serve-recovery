@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pronto — Today vs. Proposed</title>
+<style>
+*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+@page{ size:A4 portrait; margin:0 }
+:root{
+  --green:#05AC5F; --green-dk:#048A4C; --green-tint:#E9F8F1; --green-line:#BFE9D5;
+  --ink:#0C0C0C; --ink-2:#333333; --ink-3:#666666; --ink-4:#8A94A0;
+  --line:#DDE5ED; --surf:#F9FAFC; --surf-2:#F1F5F9;
+  --amber:#9A5B00; --amber-bg:#FFF6E5; --amber-line:#F5DDAE;
+  --red:#B3261E; --red-bg:#FDECEA; --red-line:#F5C6C2;
+  --radius:18px;
+  --font:"Lexend","Urbanist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+html,body{margin:0;padding:0;background:#fff;color:var(--ink);font-family:var(--font);line-height:1.45}
+
+.page{width:210mm;height:297mm;padding:13mm 12mm 10mm;position:relative;overflow:hidden;background:#fff;
+  page-break-after:always;break-after:page}
+.page:last-child{page-break-after:auto;break-after:auto}
+
+/* ---------- page header ---------- */
+.ph{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;
+  padding-bottom:11px;border-bottom:2px solid var(--ink);margin-bottom:16px}
+.kick{display:inline-flex;align-items:center;gap:7px;font-size:9.5px;font-weight:800;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--green);margin-bottom:7px}
+.kick i{width:6px;height:6px;border-radius:50%;background:currentColor}
+.kick.grey{color:var(--ink-4)}
+.ph h1{margin:0 0 5px;font-size:25px;line-height:1.16;letter-spacing:-.028em;font-weight:800;max-width:16ch}
+.ph h1 .g{color:var(--green)}
+.ph .dek{margin:0;font-size:11.5px;color:var(--ink-3);line-height:1.55;max-width:46ch}
+.pnum{flex:0 0 auto;text-align:right}
+.pnum .n{font-size:34px;font-weight:800;letter-spacing:-.04em;line-height:1;color:var(--surf-2)}
+.pnum .l{font-size:8.5px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-4);margin-top:3px}
+
+/* ---------- phone rig ---------- */
+.rig{display:flex;gap:26px;justify-content:center;align-items:flex-start}
+.slot{width:300px;height:584px;position:relative}
+.slot .cap{position:absolute;bottom:0;left:0;right:0;text-align:center;font-size:9px;font-weight:800;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--ink-4)}
+.zoom{transform:scale(.78);transform-origin:top left;width:380px}
+
+.device{width:380px;background:#0C0C0C;border-radius:44px;padding:11px;box-shadow:0 10px 26px rgba(12,12,12,.18)}
+.screen{position:relative;background:#fff;border-radius:34px;overflow:hidden;height:700px;display:flex;flex-direction:column}
+.notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;height:26px;background:#0C0C0C;
+  border-radius:0 0 16px 16px;z-index:4}
+.statusbar{display:flex;justify-content:space-between;align-items:center;padding:11px 22px 5px;font-size:12px;font-weight:700}
+.appbar{display:flex;align-items:center;gap:10px;padding:6px 18px 12px;border-bottom:1px solid var(--line)}
+.appbar .back{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;
+  font-size:15px;flex:0 0 auto}
+.appbar .logo{font-size:19px;font-weight:800;color:var(--green);letter-spacing:-.03em}
+.appbar .ttl{font-size:13px;font-weight:700;color:var(--ink-3)}
+.appbar .ttl.b{font-size:15px;font-weight:800;color:var(--ink)}
+.appbar .sp{margin-left:auto;font-size:11px;color:var(--ink-3);font-weight:600}
+.body{flex:1;padding:14px 16px;overflow:hidden}
+
+.h-lg{font-size:21px;font-weight:800;letter-spacing:-.02em;margin:0 0 4px;line-height:1.22}
+.h-md{font-size:15px;font-weight:800;margin:0 0 6px;letter-spacing:-.01em}
+.sub{font-size:12.5px;color:var(--ink-3);margin:0 0 14px;line-height:1.5}
+.eyebrow{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-4);margin:16px 0 8px}
+
+.card{border:1px solid var(--line);border-radius:var(--radius);padding:14px;background:#fff;margin-bottom:12px}
+.card.tint{background:var(--green-tint);border-color:var(--green-line)}
+.card.warn{background:var(--amber-bg);border-color:var(--amber-line)}
+.card.bad{background:var(--red-bg);border-color:var(--red-line)}
+.card.flat{background:var(--surf);border-color:var(--surf)}
+
+.hero{border-radius:22px;padding:16px;margin-bottom:12px;border:1px solid var(--line);background:var(--surf)}
+.hero.bad{background:var(--red-bg);border-color:var(--red-line)}
+.hero .lab{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:800;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-3);margin-bottom:8px}
+.hero.bad .lab{color:var(--red)}
+.hero .lab i{width:7px;height:7px;border-radius:50%;background:currentColor}
+.hero .big{font-size:24px;font-weight:800;letter-spacing:-.03em;line-height:1.15;margin-bottom:4px}
+.hero .small{font-size:12.5px;color:var(--ink-2);line-height:1.5}
+.detected{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);
+  border-radius:999px;padding:4px 10px;font-size:10.5px;font-weight:700;color:var(--ink-3);margin-top:10px}
+.detected b{color:var(--ink);font-weight:800}
+
+.pro{display:flex;align-items:center;gap:11px}
+.pro .av{width:44px;height:44px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;
+  font-weight:800;font-size:15px;flex:0 0 auto}
+.pro .nm{font-size:14.5px;font-weight:800}
+.pro .mt{font-size:11.5px;color:var(--ink-3)}
+.pro .vf{margin-left:auto;font-size:10px;font-weight:800;color:var(--green-dk);background:var(--green-tint);
+  border:1px solid var(--green-line);border-radius:999px;padding:4px 9px;text-align:center;line-height:1.25}
+
+.btn{display:block;width:100%;text-align:center;border:0;border-radius:14px;padding:13px 12px;font-size:14px;
+  font-weight:800;margin-bottom:9px;letter-spacing:-.01em}
+.btn.danger{background:var(--red);color:#fff}
+.btn.ghost{background:#fff;color:var(--ink);border:1.5px solid var(--line)}
+.btn.disabled{background:var(--surf-2);color:var(--ink-4);border:1px solid var(--line)}
+.btn .sm{display:block;font-size:11px;font-weight:600;opacity:.85;margin-top:3px}
+
+.rowbtn{display:flex;align-items:center;gap:11px;width:100%;background:#fff;border:1px solid var(--line);
+  border-radius:14px;padding:12px 13px;margin-bottom:9px}
+.rowbtn .ic{width:34px;height:34px;border-radius:10px;background:var(--surf-2);display:grid;place-items:center;
+  font-size:15px;flex:0 0 auto}
+.rowbtn .t{font-size:13.5px;font-weight:700;display:block}
+.rowbtn .s{font-size:11px;color:var(--ink-3);display:block;margin-top:2px;line-height:1.35}
+.rowbtn .ch{margin-left:auto;color:var(--ink-4);font-size:16px;flex:0 0 auto}
+.rowbtn .tag{margin-left:auto;font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;
+  padding:4px 7px;border-radius:6px;flex:0 0 auto}
+.tag.auto{background:var(--green-tint);color:var(--green-dk)}
+.tag.human{background:#EDF3FE;color:#1B5FBF}
+
+.stepper{list-style:none;margin:6px 0 0;padding:0}
+.stepper li{display:flex;gap:10px;padding-bottom:13px;position:relative}
+.stepper li:not(:last-child):before{content:"";position:absolute;left:8px;top:18px;bottom:0;width:2px;background:var(--line)}
+.stepper li.done:not(:last-child):before{background:var(--green)}
+.stepper .c{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);background:#fff;flex:0 0 auto;
+  display:grid;place-items:center;font-size:10px;color:#fff;line-height:1}
+.stepper li.done .c{background:var(--green);border-color:var(--green)}
+.stepper li.live .c{border-color:var(--green);box-shadow:0 0 0 3px rgba(5,172,95,.2)}
+.stepper .t{font-size:13px;font-weight:700} .stepper .s{font-size:11px;color:var(--ink-3);margin-top:2px}
+.stepper li.pending .t{color:var(--ink-4);font-weight:600}
+
+.banner{border-radius:12px;padding:10px 12px;font-size:11.5px;line-height:1.5;margin-bottom:12px}
+.banner.grey{background:var(--surf-2);color:var(--ink-3)}
+.textbox{border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:12px;background:#fff;
+  font-size:12.5px;color:var(--ink-4);height:86px}
+
+/* ---------- callouts ---------- */
+.calls{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:14px}
+.call{border-top:2px solid var(--ink);padding-top:9px}
+.call.g{border-top-color:var(--green)}
+.call .n{font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-4);margin-bottom:5px}
+.call h3{margin:0 0 4px;font-size:12.5px;font-weight:800;letter-spacing:-.01em;line-height:1.28}
+.call p{margin:0;font-size:10.5px;line-height:1.55;color:var(--ink-3)}
+.call p b{color:var(--ink)}
+
+.strip{display:flex;gap:0;margin-top:12px;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.strip div{flex:1;padding:9px 12px;border-right:1px solid var(--line)}
+.strip div:last-child{border-right:0}
+.strip .k{font-size:8.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-4)}
+.strip .v{font-size:11.5px;font-weight:700;margin-top:2px;line-height:1.35}
+.strip .v.g{color:var(--green-dk)}
+.strip .v.r{color:var(--red)}
+
+.foot{position:absolute;left:12mm;right:12mm;bottom:6mm;display:flex;justify-content:space-between;gap:16px;
+  font-size:8.5px;color:var(--ink-4);line-height:1.5;padding-top:6px;border-top:1px solid var(--line)}
+.foot b{color:var(--ink-3)}
+</style>
+</head>
+<body>
+
+<!-- ================= PAGE 1 — TODAY ================= -->
+<section class="page">
+  <div class="ph">
+    <div>
+      <div class="kick grey"><i></i>Pronto · today, reconstructed</div>
+      <h1>Two states: booked, and done</h1>
+      <p class="dek">Everything between them is invisible — so when a visit goes wrong, the customer becomes the
+        sensor, a free-text box becomes the interface, and a queue becomes the resolution.</p>
+    </div>
+    <div class="pnum"><div class="n">01</div><div class="l">Today</div></div>
+  </div>
+
+  <div class="rig">
+    <!-- phone A -->
+    <div class="slot"><div class="zoom">
+      <div class="device"><div class="screen">
+        <div class="notch"></div>
+        <div class="statusbar"><span>11:02</span><span>◍ ▮▮▮ ▯</span></div>
+        <div class="appbar"><span class="logo">Pronto</span><span class="ttl">Your booking</span><span class="sp">PR-8241</span></div>
+        <div class="body">
+          <div class="hero">
+            <div class="lab"><i></i>Booking confirmed</div>
+            <div class="big">Arriving in 15 minutes</div>
+            <div class="small">Kitchen deep clean + dishes · B-402, Vipul Belmonte, Sector 53</div>
+          </div>
+          <div class="card warn"><div style="font-size:12.5px;line-height:1.55">It has been <b>32 minutes</b>.
+            The screen still says the same thing. Nothing here updates, and nothing tells you whether your Pro is
+            coming, stuck, or gone.</div></div>
+          <div class="card"><div class="pro">
+            <div class="av">SD</div>
+            <div><div class="nm">Sunita Devi</div><div class="mt">★ 4.9</div></div>
+          </div></div>
+          <div class="eyebrow">Your options</div>
+          <div class="rowbtn"><span class="ic">?</span><span><span class="t">Help</span>
+            <span class="s">FAQs and contact us</span></span><span class="ch">›</span></div>
+          <div class="rowbtn"><span class="ic">✕</span><span><span class="t">Cancel booking</span>
+            <span class="s">Cancellation policy applies</span></span><span class="ch">›</span></div>
+          <div class="card flat" style="margin-top:14px"><div style="font-size:11.5px;color:var(--ink-3);line-height:1.6">
+            There is no state between <b>booked</b> and <b>done</b>. Whatever is happening out there, this screen looks
+            identical — so the only way to find out is to ask a person.</div></div>
+        </div>
+      </div></div>
+    </div><div class="cap">Minute 32 · the screen has not changed</div></div>
+
+    <!-- phone B -->
+    <div class="slot"><div class="zoom">
+      <div class="device"><div class="screen">
+        <div class="notch"></div>
+        <div class="statusbar"><span>11:04</span><span>◍ ▮▮▮ ▯</span></div>
+        <div class="appbar"><span class="back">‹</span><span class="ttl b">Help</span></div>
+        <div class="body">
+          <div class="h-lg">Chat with us</div>
+          <div class="card flat">
+            <div style="font-size:12.5px;color:var(--ink-3);line-height:1.6">Describe your issue and we'll get back to you.</div>
+            <div class="textbox">Type your message…</div>
+          </div>
+          <div class="btn disabled">Send</div>
+          <div class="banner grey">Live chat is available <b>7:00 AM – 10:00 PM</b>. Typical first response:
+            <b>within 24 hours</b>. Your booking details are not attached — you'll be asked for the booking ID,
+            the time, and what happened.</div>
+          <div class="card bad"><div style="font-size:12.5px;line-height:1.6">
+            <b>The whole problem in one screen.</b> The customer had to notice the failure, navigate to find this box,
+            describe it in their own words, and wait for a person to judge it — for an outcome the system could have
+            determined by itself from the pings it already has.</div></div>
+        </div>
+      </div></div>
+    </div><div class="cap">The only path out is a queue</div></div>
+  </div>
+
+  <div class="calls">
+    <div class="call">
+      <div class="n">Gap 01</div>
+      <h3>The visit is a black box</h3>
+      <p>There is no state between <b>booked</b> and <b>done</b>. At minute 3 and minute 45 the screen is identical,
+         so the only way to learn anything is to ask a person.</p>
+    </div>
+    <div class="call">
+      <div class="n">Gap 02</div>
+      <h3>The customer is the sensor</h3>
+      <p>Nothing is flagged automatically. The customer must notice the delay, classify it, describe it, and then
+         defend it — <b>for failures the system can already see</b>.</p>
+    </div>
+    <div class="call">
+      <div class="n">Gap 03</div>
+      <h3>Support hours ≠ booking hours</h3>
+      <p>Booking is sold as <b>24/7</b>. Live chat runs roughly <b>7 AM – 10 PM</b>. That leaves nine hours a day
+         where you can book but cannot reach anyone when it fails.</p>
+    </div>
+  </div>
+
+  <div class="strip">
+    <div><div class="k">Promised arrival</div><div class="v">15 minutes</div></div>
+    <div><div class="k">Reported in reviews</div><div class="v r">40–50 minutes</div></div>
+    <div><div class="k">Refund status</div><div class="v r">Not visible</div></div>
+    <div><div class="k">Resolution path</div><div class="v r">Free text → queue</div></div>
+  </div>
+
+  <div class="foot">
+    <span><b>Reconstruction, not a screenshot.</b> Assembled from public app-store reviews, the live withpronto.com
+      site, and press coverage. Names, addresses, and timings are fictional sample data.</span>
+    <span style="flex:0 0 auto;text-align:right">Case study · Antarya Mondal<br>Page 1 of 2</span>
+  </div>
+</section>
+
+<!-- ================= PAGE 2 — PROPOSED ================= -->
+<section class="page">
+  <div class="ph">
+    <div>
+      <div class="kick"><i></i>Pronto · proposed feature</div>
+      <h1>Self-serve recovery with <span class="g">live visit status</span></h1>
+      <p class="dek">The missing middle: a set of visible states, each with an action attached — so the system
+        detects the failure, and the customer resolves it without ever reaching a human.</p>
+    </div>
+    <div class="pnum"><div class="n">02</div><div class="l">Proposed</div></div>
+  </div>
+
+  <div class="rig">
+    <!-- phone C -->
+    <div class="slot"><div class="zoom">
+      <div class="device"><div class="screen">
+        <div class="notch"></div>
+        <div class="statusbar"><span>11:02</span><span>◍ ▮▮▮ ▯</span></div>
+        <div class="appbar"><span class="logo">Pronto</span><span class="ttl">Your visit</span><span class="sp">PR-8241</span></div>
+        <div class="body">
+          <div class="hero bad">
+            <div class="lab"><i></i>No-show confirmed</div>
+            <div class="big">Sunita didn't arrive</div>
+            <div class="small">15 minutes past the revised arrival time. Your ₹549 is ready to come back.</div>
+            <div class="detected">⦿ Detected automatically at <b>11:02 AM</b></div>
+          </div>
+          <div class="card bad">
+            <div class="h-md">Get your money back now</div>
+            <div class="sub" style="margin-bottom:12px">No ticket, no explanation, no waiting for an agent.
+              We already know what happened.</div>
+            <div class="btn danger" style="margin-bottom:0">Refund ₹549 now
+              <span class="sm">Confirmed by GPS + timestamps · instant</span></div>
+          </div>
+          <div class="card tint">
+            <div class="h-md">₹549 refund · in progress</div>
+            <div class="sub" style="margin-bottom:6px">You can reopen this any time. It will never go quiet on you.</div>
+            <ul class="stepper">
+              <li class="done"><span class="c">✓</span><div><div class="t">Refund approved automatically</div>
+                <div class="s">No review needed — the no-show is in the visit record · 11:02 AM</div></div></li>
+              <li class="done"><span class="c">✓</span><div><div class="t">Sent to your bank</div>
+                <div class="s">HDFC •••• 4417 · 11:04 AM</div></div></li>
+              <li class="live"><span class="c"></span><div><div class="t">Credited to your account</div>
+                <div class="s">Usually within a few hours — we'll tell you</div></div></li>
+            </ul>
+          </div>
+        </div>
+      </div></div>
+    </div><div class="cap">Flagged by the system · refunded in one tap</div></div>
+
+    <!-- phone D -->
+    <div class="slot"><div class="zoom">
+      <div class="device"><div class="screen">
+        <div class="notch"></div>
+        <div class="statusbar"><span>11:03</span><span>◍ ▮▮▮ ▯</span></div>
+        <div class="appbar"><span class="back">‹</span><span class="ttl b">Report an issue</span></div>
+        <div class="body">
+          <div class="h-lg">What went wrong?</div>
+          <div class="sub" style="margin-bottom:12px">Pick the closest one. Anything we can check ourselves is
+            resolved on the spot.</div>
+          <div class="rowbtn"><span class="ic">⏰</span><span><span class="t">My Pro hasn't arrived</span>
+            <span class="s">Checked against arrival pings</span></span><span class="tag auto">Auto</span></div>
+          <div class="rowbtn"><span class="ic">🕒</span><span><span class="t">My Pro is very late</span>
+            <span class="s">Checked against the committed window</span></span><span class="tag auto">Auto</span></div>
+          <div class="rowbtn"><span class="ic">🧹</span><span><span class="t">A task wasn't done</span>
+            <span class="s">Checked against the visit checklist</span></span><span class="tag auto">Auto</span></div>
+          <div class="rowbtn"><span class="ic">💵</span><span><span class="t">My Pro asked for cash</span>
+            <span class="s">Policy violation · logged instantly</span></span><span class="tag auto">Auto</span></div>
+          <div class="rowbtn"><span class="ic">🛡</span><span><span class="t">I have a safety concern</span>
+            <span class="s">Always a live human, 24/7</span></span><span class="tag human">Human</span></div>
+          <div class="rowbtn"><span class="ic">💬</span><span><span class="t">Something else</span>
+            <span class="s">Free text — deliberately the last option</span></span><span class="tag human">Human</span></div>
+          <div class="banner grey" style="margin-top:2px">A free-text box is the <b>last</b> option, not the first.
+            Categories are what make automatic resolution possible.</div>
+        </div>
+      </div></div>
+    </div><div class="cap">Structured categories, not a paragraph</div></div>
+  </div>
+
+  <div class="calls">
+    <div class="call g">
+      <div class="n">Fix 01</div>
+      <h3>The system is the sensor</h3>
+      <p>Every transition is <b>detected automatically</b> and stamped. Nobody has to notice it's been 40 minutes.
+         The delay credit lands <b>before</b> anyone asks for it.</p>
+    </div>
+    <div class="call g">
+      <div class="n">Fix 02</div>
+      <h3>Checkable, so resolvable</h3>
+      <p>A no-show is a no-show because the <b>GPS and timestamps say so</b> — not because a customer describes it
+         convincingly. That removes tickets rather than answering them faster.</p>
+    </div>
+    <div class="call g">
+      <div class="n">Fix 03</div>
+      <h3>A failure handled well builds trust</h3>
+      <p>Visible, flagged, already refunding reads as <b>"they're on top of this"</b> rather than "they're unreliable."
+         Same bad outcome, opposite feeling.</p>
+    </div>
+  </div>
+
+  <div class="strip">
+    <div><div class="k">Arrival shown as</div><div class="v g">A window, kept honest</div></div>
+    <div><div class="k">Visit</div><div class="v g">Live task checklist</div></div>
+    <div><div class="k">No-show refund</div><div class="v g">One tap · no ticket</div></div>
+    <div><div class="k">Human queue</div><div class="v g">Ambiguous cases only</div></div>
+  </div>
+
+  <div class="foot">
+    <span><b>Measured by:</b> support contact rate per booking (down) · median time from failure to
+      resolved-or-refunded (down) · repeat booking rate after a failed first booking, converging toward the
+      successful-first-booking rate.</span>
+    <span style="flex:0 0 auto;text-align:right">Case study · Antarya Mondal<br>Page 2 of 2</span>
+  </div>
+</section>
+
+</body>
+</html>
