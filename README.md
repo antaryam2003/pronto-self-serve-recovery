@@ -1,5 +1,8 @@
 # Pronto — Self-serve recovery with live visit status
 
+**▶ Live prototype: https://antaryam2003.github.io/pronto-self-serve-recovery/**
+· [Two-page PDF](https://antaryam2003.github.io/pronto-self-serve-recovery/pronto-today-vs-proposed.pdf)
+
 An interactive, clickable prototype of a single proposed feature for **Pronto** (withpronto.com),
 the on-demand house-help platform. Open `index.html` in any browser — no build step, no
 dependencies, no network calls.
